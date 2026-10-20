@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>My YouTube Links</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #f3f4f6; color: #111827;
+      font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+    header { background: #111827; color: #fff; padding: 22px 16px; }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 25px; margin: 0 0 6px; }
+    .sub { margin: 0; color: #d1d5db; font-size: 14px; }
+    main { padding: 16px; }
+    #search {
+      width: 100%; padding: 13px 12px; margin: 0 0 14px;
+      border: 1px solid #d1d5db; border-radius: 10px; background: #fff;
+      font-size: 16px; -webkit-appearance: none;
+    }
+    .item {
+      display: -webkit-box; display: -ms-flexbox; display: flex;
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+      padding: 10px; margin: 0 0 12px; min-height: 100px;
+      -webkit-box-align: center; -ms-flex-align: center; align-items: center;
+    }
+    .thumb { width: 132px; height: 74px; object-fit: cover; border-radius: 7px; background: #e5e7eb; }
+    .details { padding-left: 12px; min-width: 0; }
+    .name { font-weight: 700; margin: 0 0 9px; }
+    .open {
+      display: inline-block; background: #dc2626; color: #fff; text-decoration: none;
+      font-weight: 700; padding: 8px 12px; border-radius: 7px;
+    }
+    .open:active { background: #991b1b; }
+    .smalllink { display: block; margin-top: 7px; color: #4b5563; font-size: 12px; overflow-wrap: anywhere; }
+    #count { color: #6b7280; font-size: 13px; margin: 0 0 12px; }
+    #empty { display: none; background: #fff; border-radius: 10px; padding: 18px; }
+    footer { text-align: center; color: #6b7280; font-size: 12px; padding: 8px 16px 28px; }
+    @media (max-width: 420px) {
+      .thumb { width: 108px; height: 61px; }
+      .item { padding: 8px; }
+      .details { padding-left: 9px; }
+      .name { font-size: 15px; }
+      .open { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>My YouTube Links</h1>
+      <p class="sub">Unlisted videos · Tap “Open video” to watch on YouTube</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <input id="search" type="search" placeholder="Filter videos…" aria-label="Filter videos">
+    <p id="count"></p>
+    <div id="videos"></div>
+    <div id="empty">No matching videos.</div>
+  </main>
+  <footer>Simple static page · Designed for older Safari / iOS 12</footer>
+  <script>
+    (function () {
+      var videos = [{"number":1,"id":"AXX1PjAtmhc","url":"https://youtu.be/AXX1PjAtmhc?si=pkxUPDWgB7J46H1V"},{"number":2,"id":"-c_PJU4-zNQ","url":"https://youtu.be/-c_PJU4-zNQ?si=uiV4QZLuhC9V2wuu"},{"number":3,"id":"uKSsFfHyTy0","url":"https://youtu.be/uKSsFfHyTy0?si=pYdmw1n5B1MxTvy0"},{"number":4,"id":"yyOxtXPtAH8","url":"https://youtu.be/yyOxtXPtAH8?si=iYJ8dXRS_Y2UsKFF"},{"number":5,"id":"zsoXq7KQdS4","url":"https://youtu.be/zsoXq7KQdS4?si=ExngiwLBAw27YI_I"},{"number":6,"id":"GyYqK09be2Q","url":"https://youtu.be/GyYqK09be2Q?si=KHN7M0UyQjAF0vGc"},{"number":7,"id":"2FkJW6YMw1Q","url":"https://youtu.be/2FkJW6YMw1Q?si=b5oj8z9Tv7wp7_E7"},{"number":8,"id":"ewbyYjtoyow","url":"https://youtu.be/ewbyYjtoyow?si=50SPEwwezjV0r9r8"}];
+      var list = document.getElementById('videos');
+      var search = document.getElementById('search');
+      var count = document.getElementById('count');
+      var empty = document.getElementById('empty');
+
+      function render() {
+        var query = search.value.toLowerCase().replace(/^\s+|\s+$/g, '');
+        var shown = 0;
+        list.innerHTML = '';
+        for (var i = 0; i < videos.length; i++) {
+          var video = videos[i];
+          var label = 'Video ' + video.number;
+          if (query && label.toLowerCase().indexOf(query) === -1 &&
+              video.id.toLowerCase().indexOf(query) === -1) continue;
+
+          var card = document.createElement('div');
+          card.className = 'item';
+
+          var image = document.createElement('img');
+          image.className = 'thumb';
+          image.alt = '';
+          image.src = 'https://img.youtube.com/vi/' + video.id + '/mqdefault.jpg';
+          image.onerror = function () { this.style.display = 'none'; };
+
+          var details = document.createElement('div');
+          details.className = 'details';
+
+          var name = document.createElement('p');
+          name.className = 'name';
+          name.appendChild(document.createTextNode(label));
+
+          var open = document.createElement('a');
+          open.className = 'open';
+          open.href = video.url;
+          open.target = '_blank';
+          open.rel = 'noopener';
+          open.appendChild(document.createTextNode('Open video'));
+
+          var id = document.createElement('span');
+          id.className = 'smalllink';
+          id.appendChild(document.createTextNode(video.id));
+
+          details.appendChild(name);
+          details.appendChild(open);
+          details.appendChild(id);
+          card.appendChild(image);
+          card.appendChild(details);
+          list.appendChild(card);
+          shown++;
+        }
+        count.textContent = shown + ' of ' + videos.length + ' videos';
+        empty.style.display = shown ? 'none' : 'block';
+      }
+      search.addEventListener('input', render, false);
+      render();
+    }());
+  </script>
+</body>
+</html>
