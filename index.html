@@ -1,140 +1,320 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Links</title>
-<style>
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{font-family:-apple-system,Helvetica,Arial,sans-serif;background:#f2f2f7;color:#111;-webkit-text-size-adjust:100%}
-.wrap{max-width:900px;margin:0 auto;padding:16px}
-h1{font-size:26px;margin:8px 0 12px}
-.crumbs{font-size:15px;margin-bottom:10px}
-.crumbs a{color:#007aff;text-decoration:none}
-.sep{color:#888;margin:0 6px}
-.tiles{margin:0 -6px;overflow:hidden}
-.tile{display:block;float:left;width:50%;padding:6px;text-decoration:none;color:inherit}
-.tile div{background:#fff;border-radius:12px;padding:18px 14px;box-shadow:0 1px 3px rgba(0,0,0,.12);min-height:84px}
-.tile b{display:block;font-size:18px;word-wrap:break-word}
-.tile span{display:block;margin-top:6px;font-size:13px;color:#777}
-@media(min-width:700px){.tile{width:33.333%}}
-input.q{width:100%;font-size:17px;padding:10px 12px;border:1px solid #c7c7cc;border-radius:10px;margin-bottom:12px;-webkit-appearance:none}
-.card{display:block;background:#fff;border-radius:12px;margin-bottom:12px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.thumb{position:relative;width:100%;padding-top:56.25%;background:#222}
-.thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
-.info{padding:10px 14px}
-.info b{display:block;font-size:16px;word-wrap:break-word}
-.info small{display:block;color:#777;margin-top:3px;word-wrap:break-word}
-.num{color:#007aff}
-.empty{color:#777;padding:20px 0}
-</style>
-</head>
-<body>
-<div class="wrap">
-<h1 id="title">My Links</h1>
-<div class="crumbs" id="crumbs"></div>
-<div id="app"></div>
-</div>
-<script src="catalog.js"></script>
-<script>
-(function () {
-  var data = window.CATALOG || [];
-  var app = document.getElementById('app');
-  var crumbs = document.getElementById('crumbs');
-  var titleEl = document.getElementById('title');
-
-  function esc(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-  function enc(s) { return encodeURIComponent(s); }
-  function find(arr, name) {
-    for (var i = 0; i < arr.length; i++) if (arr[i].name === name) return arr[i];
-    return null;
-  }
-  function parseHash() {
-    var out = {}, h = (location.hash || '').replace(/^#/, '');
-    if (!h) return out;
-    var parts = h.split('&');
-    for (var i = 0; i < parts.length; i++) {
-      var kv = parts[i].split('=');
-      try { out[kv[0]] = decodeURIComponent(kv[1] || ''); } catch (e) {}
-    }
-    return out;
-  }
-  function count(cat) {
-    var n = 0;
-    for (var i = 0; i < cat.lists.length; i++) n += cat.lists[i].links.length;
-    return n;
-  }
-  function tile(href, name, sub) {
-    return '<a class="tile" href="' + href + '"><div><b>' + esc(name) + '</b><span>' + esc(sub) + '</span></div></a>';
-  }
-
-  function showHome() {
-    titleEl.textContent = 'My Links';
-    crumbs.innerHTML = '';
-    if (!data.length) { app.innerHTML = '<p class="empty">No categories yet. Add folders with .txt files and run build.py.</p>'; return; }
-    var h = '<div class="tiles">';
-    for (var i = 0; i < data.length; i++) {
-      h += tile('#c=' + enc(data[i].name), data[i].name, data[i].lists.length + ' lists \u00b7 ' + count(data[i]) + ' links');
-    }
-    app.innerHTML = h + '</div>';
-  }
-
-  function showCategory(cat) {
-    titleEl.textContent = cat.name;
-    crumbs.innerHTML = '<a href="#">Home</a><span class="sep">/</span>' + esc(cat.name);
-    var h = '<div class="tiles">';
-    for (var i = 0; i < cat.lists.length; i++) {
-      var l = cat.lists[i];
-      h += tile('#c=' + enc(cat.name) + '&l=' + enc(l.name), l.name, l.links.length + ' links');
-    }
-    app.innerHTML = h + '</div>';
-  }
-
-  function cardHtml(link, i) {
-    var thumb = link.id
-      ? '<div class="thumb"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + link.id + '/mqdefault.jpg"></div>'
-      : '';
-    var name = link.title || link.url;
-    return '<a class="card" target="_blank" rel="noopener" href="' + esc(link.url) + '" data-s="' + esc((link.title + ' ' + link.url).toLowerCase()) + '">' +
-      thumb + '<div class="info"><b><span class="num">' + (i + 1) + '.</span> ' + esc(name) + '</b>' +
-      (link.title ? '<small>' + esc(link.url) + '</small>' : '') + '</div></a>';
-  }
-
-  function showList(cat, list) {
-    titleEl.textContent = list.name;
-    crumbs.innerHTML = '<a href="#">Home</a><span class="sep">/</span><a href="#c=' + enc(cat.name) + '">' + esc(cat.name) + '</a><span class="sep">/</span>' + esc(list.name);
-    if (!list.links.length) { app.innerHTML = '<p class="empty">This list is empty.</p>'; return; }
-    var h = '<input class="q" id="q" type="search" placeholder="Search ' + list.links.length + ' links" autocomplete="off" autocapitalize="off">';
-    h += '<div id="cards">';
-    for (var i = 0; i < list.links.length; i++) h += cardHtml(list.links[i], i);
-    h += '</div>';
-    app.innerHTML = h;
-    var q = document.getElementById('q');
-    var cards = document.getElementById('cards').children;
-    q.oninput = function () {
-      var v = q.value.toLowerCase();
-      for (var j = 0; j < cards.length; j++) {
-        cards[j].style.display = cards[j].getAttribute('data-s').indexOf(v) === -1 ? 'none' : '';
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Oishi's links</title>
+    <style>
+      * {
+        box-sizing: border-box;
       }
-    };
-  }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, Helvetica, Arial, sans-serif;
+        background: #f2f2f7;
+        color: #111;
+        -webkit-text-size-adjust: 100%;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 8px 0 12px;
+      }
+      .crumbs {
+        font-size: 15px;
+        margin-bottom: 10px;
+      }
+      .crumbs a {
+        color: #007aff;
+        text-decoration: none;
+      }
+      .sep {
+        color: #888;
+        margin: 0 6px;
+      }
+      .tiles {
+        margin: 0 -6px;
+        overflow: hidden;
+      }
+      .tile {
+        display: block;
+        float: left;
+        width: 20%;
+        padding: 6px;
+        text-decoration: none;
+        color: inherit;
+      }
+      .tile div {
+        background: #fff;
+        border-radius: 12px;
+        padding: 18px 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        min-height: 84px;
+      }
+      .tile b {
+        display: block;
+        font-size: 18px;
+        word-wrap: break-word;
+      }
+      .tile span {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+        color: #777;
+      }
+      @media (min-width: 700px) {
+        .tile {
+          width: 33.333%;
+        }
+      }
+      input.q {
+        width: 100%;
+        font-size: 17px;
+        padding: 10px 12px;
+        border: 1px solid #c7c7cc;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        -webkit-appearance: none;
+      }
+      .card {
+        display: block;
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+      .thumb {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        background: #222;
+      }
+      .thumb img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .info {
+        padding: 10px 14px;
+      }
+      .info b {
+        display: block;
+        font-size: 16px;
+        word-wrap: break-word;
+      }
+      .info small {
+        display: block;
+        color: #777;
+        margin-top: 3px;
+        word-wrap: break-word;
+      }
+      .num {
+        color: #007aff;
+      }
+      .empty {
+        color: #777;
+        padding: 20px 0;
+      }
+      #cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+      }
+      .thumb span {
+        bottom: 0.1rem;
+        right: 1rem;
+        position: absolute;
+        color: #686969d8;
+        font-size: 8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 id="title">TARGET BCS</h1>
+      <div class="crumbs" id="crumbs"></div>
+      <div id="app"></div>
+    </div>
+    <script src="catalog.js"></script>
+    <script>
+      (function () {
+        var data = window.CATALOG || [];
+        var app = document.getElementById("app");
+        var crumbs = document.getElementById("crumbs");
+        var titleEl = document.getElementById("title");
 
-  function route() {
-    var p = parseHash();
-    var cat = p.c ? find(data, p.c) : null;
-    var list = (cat && p.l) ? find(cat.lists, p.l) : null;
-    if (cat && list) showList(cat, list);
-    else if (cat) showCategory(cat);
-    else showHome();
-    window.scrollTo(0, 0);
-  }
+        function esc(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+        function enc(s) {
+          return encodeURIComponent(s);
+        }
+        function find(arr, name) {
+          for (var i = 0; i < arr.length; i++)
+            if (arr[i].name === name) return arr[i];
+          return null;
+        }
+        function parseHash() {
+          var out = {},
+            h = (location.hash || "").replace(/^#/, "");
+          if (!h) return out;
+          var parts = h.split("&");
+          for (var i = 0; i < parts.length; i++) {
+            var kv = parts[i].split("=");
+            try {
+              out[kv[0]] = decodeURIComponent(kv[1] || "");
+            } catch (e) {}
+          }
+          return out;
+        }
+        function count(cat) {
+          var n = 0;
+          for (var i = 0; i < cat.lists.length; i++)
+            n += cat.lists[i].links.length;
+          return n;
+        }
+        function tile(href, name, sub) {
+          return (
+            '<a class="tile" href="' +
+            href +
+            '"><div><b>' +
+            esc(name) +
+            "</b><span>" +
+            esc(sub) +
+            "</span></div></a>"
+          );
+        }
 
-  window.addEventListener('hashchange', route, false);
-  route();
-})();
-</script>
-</body>
+        function showHome() {
+          titleEl.textContent = "Target BCS";
+          crumbs.innerHTML = "";
+          if (!data.length) {
+            app.innerHTML =
+              '<p class="empty">No categories yet. Add folders with .txt files and run build.py.</p>';
+            return;
+          }
+          var h = '<div class="tiles">';
+          for (var i = 0; i < data.length; i++) {
+            h += tile(
+              "#c=" + enc(data[i].name),
+              data[i].name,
+              data[i].lists.length +
+                " lists \u00b7 " +
+                count(data[i]) +
+                " links",
+            );
+          }
+          app.innerHTML = h + "</div>";
+        }
+
+        function showCategory(cat) {
+          titleEl.textContent = cat.name;
+          crumbs.innerHTML =
+            '<a href="#">Home</a><span class="sep">/</span>' + esc(cat.name);
+          var h = '<div class="tiles">';
+          for (var i = 0; i < cat.lists.length; i++) {
+            var l = cat.lists[i];
+            h += tile(
+              "#c=" + enc(cat.name) + "&l=" + enc(l.name),
+              l.name,
+              l.links.length + " links",
+            );
+          }
+          app.innerHTML = h + "</div>";
+        }
+
+        function cardHtml(link, i) {
+          var thumb = link.id
+            ? '<div class="thumb"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/' +
+              link.id +
+              '/mqdefault.jpg">' +
+              '<span>' +
+              (i + 1) +
+              "</span>" +
+              '</div>'
+            : "";
+          var name = link.title || link.url;
+          return (
+            '<a class="card" target="_blank" rel="noopener" href="' +
+            esc(link.url) +
+            '" data-s="' +
+            esc((link.title + " " + link.url).toLowerCase()) +
+            '">' +
+            thumb +
+            '<div class="info"><b><span class="num">' +
+            (i + 1) +
+            ".</span> " +
+            esc(name) +
+            "</b>" +
+            (link.title ? "<small>" + esc(link.url) + "</small>" : "") +
+            "</div></a>"
+          );
+        }
+
+        function showList(cat, list) {
+          titleEl.textContent = list.name;
+          crumbs.innerHTML =
+            '<a href="#">Home</a><span class="sep">/</span><a href="#c=' +
+            enc(cat.name) +
+            '">' +
+            esc(cat.name) +
+            '</a><span class="sep">/</span>' +
+            esc(list.name);
+          if (!list.links.length) {
+            app.innerHTML = '<p class="empty">This list is empty.</p>';
+            return;
+          }
+          var h =
+            '<input class="q" id="q" type="search" placeholder="Search ' +
+            list.links.length +
+            ' links" autocomplete="off" autocapitalize="off">';
+          h += '<div id="cards">';
+          for (var i = 0; i < list.links.length; i++)
+            h += cardHtml(list.links[i], i);
+          h += "</div>";
+          app.innerHTML = h;
+          var q = document.getElementById("q");
+          var cards = document.getElementById("cards").children;
+          q.oninput = function () {
+            var v = q.value.toLowerCase();
+            for (var j = 0; j < cards.length; j++) {
+              cards[j].style.display =
+                cards[j].getAttribute("data-s").indexOf(v) === -1 ? "none" : "";
+            }
+          };
+        }
+
+        function route() {
+          var p = parseHash();
+          var cat = p.c ? find(data, p.c) : null;
+          var list = cat && p.l ? find(cat.lists, p.l) : null;
+          if (cat && list) showList(cat, list);
+          else if (cat) showCategory(cat);
+          else showHome();
+          window.scrollTo(0, 0);
+        }
+
+        window.addEventListener("hashchange", route, false);
+        route();
+      })();
+    </script>
+  </body>
 </html>
